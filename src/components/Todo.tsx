@@ -10,21 +10,35 @@ interface TodoItem {
 const TodoApp = () => {
   const [todo, setTodo] = useState("");
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+  const [editTodoId, setEditTodoId] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const handleAddTodo = () => {
+  const handleTodo = () => {
     if (todo.trim() !== "") {
-      const existingTodos = JSON.parse(localStorage.getItem("todos") || "[]");
-      const newTodo = { id: Date.now(), text: todo };
-      const updatedTodos = [...existingTodos, newTodo];
-      localStorage.setItem("todos", JSON.stringify(updatedTodos));
-      setTodo("");
-      setTodoItems(updatedTodos);
+      if (isEditing) {
+        const existingTodos = JSON.parse(localStorage.getItem("todos") || "[]");
+        const updatedTodos = existingTodos.map((item: TodoItem) =>
+          item.id === editTodoId ? { ...item, text: todo } : item,
+        );
+        localStorage.setItem("todos", JSON.stringify(updatedTodos));
+        setTodoItems(updatedTodos);
+        setIsEditing(false);
+        setEditTodoId(null);
+        setTodo("");
+      } else {
+        const existingTodos = JSON.parse(localStorage.getItem("todos") || "[]");
+        const newTodo = { id: Date.now(), text: todo };
+        const updatedTodos = [...existingTodos, newTodo];
+        localStorage.setItem("todos", JSON.stringify(updatedTodos));
+        setTodo("");
+        setTodoItems(updatedTodos);
+      }
     }
   };
   const handleDeleteTodo = (id: number) => {
     const existingTodos = JSON.parse(localStorage.getItem("todos") || "[]");
     const updatedTodos = existingTodos.filter(
-      (todo: { id: number }) => todo.id !== id,
+      (todo: TodoItem) => todo.id !== id,
     );
     localStorage.setItem("todos", JSON.stringify(updatedTodos));
     setTodoItems(updatedTodos);
@@ -32,6 +46,12 @@ const TodoApp = () => {
   const getTodosFromLocalStorage = () => {
     const existingTodos = JSON.parse(localStorage.getItem("todos") || "[]");
     setTodoItems(existingTodos);
+  };
+
+  const getEditTodo = (id: number, text: string) => {
+    setEditTodoId(id);
+    setTodo(text);
+    setIsEditing(true);
   };
 
   useEffect(() => {
@@ -42,11 +62,11 @@ const TodoApp = () => {
     <>
       <div className="flex flex-col w-[70%] mx-auto mt-10">
         <div className="flex w-full gap-2 ">
+          <input type="text" hidden name="editTodoId" />
           <input
             type="text"
             placeholder="Add a new todo..."
-            className="w-[70%] sm:w-[80%] border border-gray-300 rounded-lg p-4   focus:outline-none focus:ring-2 focus:ring-grey-300 shadow-sm focus:border-transparent"
-            name="todoInput"
+            className="w-[70%] sm:w-[80%] border border-gray-300 rounded-lg p-4   focus:outline-none focus:ring-2 focus:ring-grey-300 shadow-sm "
             value={todo}
             onChange={(e) => {
               setTodo(e.target.value);
@@ -54,9 +74,9 @@ const TodoApp = () => {
           />
           <button
             className="w-[30%] sm:w-[20%] bg-gray-800 text-white rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-300"
-            onClick={handleAddTodo}
+            onClick={handleTodo}
           >
-            add todo
+            {isEditing ? "Update Todo" : "Add Todo"}
           </button>
         </div>
 
@@ -78,6 +98,7 @@ const TodoApp = () => {
                     <FaRegEdit
                       size={20}
                       className="cursor-pointer text-orange-500 hover:text-blue-500 transition-colors duration-300"
+                      onClick={() => getEditTodo(item.id, item.text)}
                     />
                     <MdDelete
                       size={20}
