@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FaCheckCircle, FaTrash } from "react-icons/fa";
+import { useState, useRef } from "react";
+import Todo from "./Todo";
 
 interface Todo {
   id: number;
@@ -9,17 +9,19 @@ interface Todo {
 const TodoApp = () => {
   const [input, setInput] = useState("");
   const [todos, setTodos] = useState<Todo[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const addTodo = () => {
     if (input.trim()) {
+      const value = inputRef.current?.value;
       const newTodo = {
         id: Date.now(),
-        todo: input,
+        todo: value || "",
         completed: false,
       };
       setTodos([...todos, newTodo]);
       setInput("");
-      console.log(todos);
+      inputRef.current!.value = "";
     }
   };
   const deleteTodo = (id: number) => {
@@ -27,7 +29,7 @@ const TodoApp = () => {
   };
   const completeTodo = (id: number) => {
     setTodos(
-      todos.filter((todo) =>
+      todos.map((todo) =>
         todo.id === id ? { ...todo, completed: true } : todo,
       ),
     );
@@ -39,6 +41,7 @@ const TodoApp = () => {
         <h1 className="text-center text-white text-2xl">todos For the day!</h1>
         <div className="flex gap-2 justify-center my-8">
           <input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             type="text"
@@ -58,28 +61,12 @@ const TodoApp = () => {
             <>
               {todos.map((todo) => {
                 return (
-                  <div
-                    className="my-4 flex justify-between bg-purple-900 p-2 rounded-md"
+                  <Todo
                     key={todo.id}
-                  >
-                    <p
-                      className={`text-white ${
-                        todo.completed === true ? "line-through" : ""
-                      }`}
-                    >
-                      {todo.todo}
-                    </p>
-                    <div className="flex items-center gap-2 text-xl cursor-pointer text-white transition duration-600">
-                      <FaCheckCircle
-                        className="hover:text-gray-200"
-                        onClick={() => completeTodo(todo.id)}
-                      />
-                      <FaTrash
-                        className="hover:text-gray-200"
-                        onClick={() => deleteTodo(todo.id)}
-                      />
-                    </div>
-                  </div>
+                    todo={todo}
+                    deleteTodo={deleteTodo}
+                    completeTodo={completeTodo}
+                  />
                 );
               })}
             </>
