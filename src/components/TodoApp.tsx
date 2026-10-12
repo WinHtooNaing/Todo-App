@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import Todo from "./Todo";
-
+import { todoStore } from "../store/store";
 interface Todo {
   id: number;
   todo: string;
@@ -8,31 +8,25 @@ interface Todo {
 }
 const TodoApp = () => {
   const [input, setInput] = useState("");
-  const [todos, setTodos] = useState<Todo[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const getTodos = todoStore((state) => state.todos);
   const addTodo = () => {
     if (input.trim()) {
-      const value = inputRef.current?.value;
-      const newTodo = {
-        id: Date.now(),
-        todo: value || "",
-        completed: false,
-      };
-      setTodos([...todos, newTodo]);
+      todoStore
+        .getState()
+        .addTodo({ id: Date.now(), todo: input, completed: false });
       setInput("");
       inputRef.current!.value = "";
     }
   };
   const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+    todoStore.getState().deleteTodo(id);
+    todoStore((state) => state.todos);
   };
   const completeTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: true } : todo,
-      ),
-    );
+    todoStore.getState().completeTodo(id);
+    todoStore((state) => state.todos);
   };
 
   return (
@@ -57,9 +51,9 @@ const TodoApp = () => {
         </div>
         <div>
           <h1 className="text-center text-white text-xl">todos</h1>
-          {todos?.length > 0 ? (
+          {getTodos.length > 0 ? (
             <>
-              {todos.map((todo) => {
+              {getTodos.map((todo) => {
                 return (
                   <Todo
                     key={todo.id}
